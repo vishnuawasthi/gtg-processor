@@ -5,7 +5,9 @@ import static com.gtg.core.criteria.SortingAndPaginationUtility.orderBy;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
@@ -20,6 +22,7 @@ import com.gtg.core.entity.UserRoles;
 import com.gtg.core.repository.UserRepository;
 import com.gtg.core.repository.UserRolesRepository;
 import com.gtg.core.utils.CommonUtility;
+import com.gtg.email.service.EmailSenderService;
 import com.gtg.processor.constants.Constants;
 import com.gtg.processor.criteria.UserSearchCriteria;
 import com.gtg.processor.exception.InvalidUserException;
@@ -27,6 +30,8 @@ import com.gtg.processor.manager.dto.LoginRequestDTO;
 import com.gtg.processor.manager.dto.LoginResponseDTO;
 import com.gtg.processor.manager.dto.UserDTO;
 import com.gtg.processor.utils.DateTimeUtil;
+import com.gtg.processor.utils.GTGUtils;
+
 /**
  * 
  * @author Vishnu Awasthi
@@ -34,17 +39,21 @@ import com.gtg.processor.utils.DateTimeUtil;
  */
 public interface LoginService {
 
-	public UserDTO getById(Long id);
+	UserDTO getById(Long id);
 
-	public UserDTO getByUsername(String username);
+	UserDTO getByUsername(String username);
 
-	public Page<UserDTO> getAll(UserSearchCriteria criteria);
+	Page<UserDTO> getAll(UserSearchCriteria criteria);
 
-	public LoginResponseDTO login(LoginRequestDTO dto) throws InvalidUserException;
+	LoginResponseDTO login(LoginRequestDTO dto) throws InvalidUserException;
 
-	public Long save(UserDTO userDTO);
+	Long save(UserDTO userDTO) throws InvalidUserException;
+
+	boolean logout(String username) throws InvalidUserException;
+
+	boolean forgotPassword(UserDTO userDTO) throws InvalidUserException;
 	
-	public boolean logout(String username) throws InvalidUserException;
+	boolean forgotPasswordAsync(UserDTO userDTO) throws InvalidUserException;
 
 	@Service("loginService")
 	public class Impl implements LoginService {
@@ -53,32 +62,37 @@ public interface LoginService {
 
 		@Autowired
 		private UserRepository userRepository;
-		
+
 		@Autowired
 		private UserRolesRepository userRolesRepository;
+
+		@Autowired
+		private EmailSenderService emailSenderService;
 
 		@Override
 		public UserDTO getById(Long id) {
 			User entity = userRepository.findOne(id);
-			return entityToDTO(entity);
+			return entityToDTO(entity, false);
 		}
 
 		@Override
 		public UserDTO getByUsername(String username) {
 			User entity = userRepository.findUserByUsername(username);
-			return entityToDTO(entity);
+			return entityToDTO(entity, true);
 		}
 
 		@Override
 		public Page<UserDTO> getAll(UserSearchCriteria criteria) {
 			log.info("getAll() - start");
 			List<UserDTO> userdtos = new ArrayList<UserDTO>();
-			Page<User> page = userRepository.findAll(createPageRequest(criteria.getPageable().getPageNumber(), criteria.getPageable().getPageSize(),orderBy(criteria.getSortColumn(), criteria.getSortOrder())));
+			Page<User> page = userRepository.findAll(createPageRequest(criteria.getPageable().getPageNumber(),
+					criteria.getPageable().getPageSize(), orderBy(criteria.getSortColumn(), criteria.getSortOrder())));
 			List<User> dbContents = page.getContent();
 			for (User user : CommonUtility.emptyIfNull(dbContents)) {
-				userdtos.add(entityToDTO(user));
+				userdtos.add(entityToDTO(user, false));
 			}
-			Page<UserDTO> pageResponse = new PageImpl<UserDTO>(userdtos,criteria.getPageable(),page.getTotalElements());
+			Page<UserDTO> pageResponse = new PageImpl<UserDTO>(userdtos, criteria.getPageable(),
+					page.getTotalElements());
 			log.info("getAll() - end");
 			return pageResponse;
 		}
@@ -90,20 +104,19 @@ public interface LoginService {
 			User user = userRepository.findUserByUsername(dto.getUsername());
 			try {
 				if (null != user && validateUser(user, dto)) {
-					
-					
+
 					String apiKey = UUID.randomUUID().toString();
 					Date apikeyExpireTime = DateTimeUtil.getApiKeyExpiredTime();
-					
-					if(!(user.getApikeyExpireTime() != null && user.getApikeyExpireTime().after(new Date())) ) {
+
+					if (!(user.getApikeyExpireTime() != null && user.getApikeyExpireTime().after(new Date()))) {
 						user.setApiKey(apiKey);
 						user.setApikeyExpireTime(apikeyExpireTime);
 						userRepository.save(user);
-					}else if(user.getApikeyExpireTime() == null) {
+					} else if (user.getApikeyExpireTime() == null) {
 						user.setApiKey(apiKey);
 						user.setApikeyExpireTime(apikeyExpireTime);
 						userRepository.save(user);
-						
+
 					}
 					responseDTO.setApiKey(user.getApiKey());
 					responseDTO.setApikeyExpireTime(user.getApikeyExpireTime());
@@ -120,7 +133,7 @@ public interface LoginService {
 				throw new InvalidUserException(e.getMessage());
 			}
 		}
-		
+
 		@Override
 		public boolean logout(String username) throws InvalidUserException {
 			log.info("logout() - start");
@@ -137,22 +150,28 @@ public interface LoginService {
 		}
 
 		public boolean validateUser(User user, LoginRequestDTO dto) {
-			if (user.getPassword().equals(dto.getPassword()) && user.getUsername().equals(dto.getUsername()))
-			{
+			if (GTGUtils.decode(user.getPassword()).equals(dto.getPassword())
+					&& user.getUsername().equals(dto.getUsername())) {
 				return true;
 			}
 			return false;
 		}
 
 		@Override
-		public Long save(UserDTO userDTO) {
+		public Long save(UserDTO userDTO) throws InvalidUserException {
 			log.info("save() - start");
+			User duplicateEntity = userRepository.findUserByUsername(userDTO.getUsername());
+
+			if (null != duplicateEntity) {
+				throw new InvalidUserException("User already exist with given username");
+			}
+
 			User entity = dtoToEntity(userDTO);
-			
+
 			UserRoles userRoles = userRolesRepository.findOne(userDTO.getRoleId());
 			entity.setUserRoles(userRoles);
 			User user = userRepository.save(entity);
-			
+
 			if (user != null) {
 				log.info("save() - end");
 				return user.getId();
@@ -161,20 +180,21 @@ public interface LoginService {
 			return null;
 		}
 
-		
-		private UserDTO entityToDTO(User entity) {
+		private UserDTO entityToDTO(User entity, boolean isLogin) {
 			UserDTO dto = null;
 			if (null != entity) {
 				dto = new UserDTO();
 				dto.setId(entity.getId());
 				dto.setUsername(entity.getUsername());
-				dto.setPassword(entity.getPassword());
+				if (isLogin) {
+					dto.setPassword(GTGUtils.decode(entity.getPassword()));
+				}
 				dto.setApiKey(entity.getApiKey());
 				dto.setFirstName(entity.getFirstName());
 				dto.setLastName(entity.getLastName());
 				dto.setEmail(entity.getEmail());
-				dto.setRoleId(StringUtils.isEmpty(entity.getUserRoles())? null : entity.getUserRoles().getId());
-				dto.setRoleName(StringUtils.isEmpty(entity.getUserRoles())? "" : entity.getUserRoles().getRoleName());
+				dto.setRoleId(StringUtils.isEmpty(entity.getUserRoles()) ? null : entity.getUserRoles().getId());
+				dto.setRoleName(StringUtils.isEmpty(entity.getUserRoles()) ? "" : entity.getUserRoles().getRoleName());
 				dto.setUpdated(entity.getUpdated());
 				dto.setCreated(entity.getCreated());
 				dto.setUpdatedBy(entity.getUpdatedBy());
@@ -193,7 +213,7 @@ public interface LoginService {
 
 				entity.setId(dto.getId());
 				entity.setUsername(dto.getUsername());
-				entity.setPassword(dto.getPassword());
+				entity.setPassword(GTGUtils.encode(dto.getPassword()));
 				// entity.setApiKey(dto.getApiKey());
 				entity.setFirstName(dto.getFirstName());
 				entity.setLastName(dto.getLastName());
@@ -214,8 +234,59 @@ public interface LoginService {
 			return null;
 		}
 
-		
+		@Override
+		public boolean forgotPassword(UserDTO userDTO) throws InvalidUserException {
+			log.info("forgotPassword()- start");
+			boolean isSuccess = false;
+			String email = userDTO.getEmail();
+			User entity = null;
+			if (!StringUtils.isEmpty(email)) {
+				entity = userRepository.findUserByEmail(email);
+				if (null != entity) {
+					entity.setPassword(GTGUtils.encode(GTGUtils.getRandomPassword()));
+					userRepository.save(entity);
 
+					Set<String> to = new HashSet<String>();
+					to.add(entity.getEmail());
+					StringBuilder builder = new StringBuilder();
+					builder.append("Dear, " + entity.getFirstName() + "<br/>");
+					builder.append("Your GTG Portal password has been reset. <br/>");
+					builder.append("Please login with your new password : " + GTGUtils.decode(entity.getPassword()));
+					emailSenderService.send(to, null, null, "GTG PASSWORD RESET", builder.toString());
+					isSuccess = true;
+				}
+			}
+
+			log.info("forgotPassword()- end");
+			return isSuccess;
+		}
+	
+		
+	@Override
+	public boolean forgotPasswordAsync(UserDTO userDTO) throws InvalidUserException {
+		log.info("forgotPasswordAsync()- start");
+		boolean isSuccess = false;
+		String email = userDTO.getEmail();
+		User entity = null;
+		if (!StringUtils.isEmpty(email)) {
+			entity = userRepository.findUserByEmail(email);
+			if (null != entity) {
+				entity.setPassword(GTGUtils.encode(GTGUtils.getRandomPassword()));
+				userRepository.save(entity);
+				Set<String> to = new HashSet<String>();
+				to.add(entity.getEmail());
+				StringBuilder builder = new StringBuilder();
+				builder.append("Dear, " + entity.getFirstName() + "<br/>");
+				builder.append("Your GTG Portal password has been reset. <br/>");
+				builder.append("Please login with your new password : " + GTGUtils.decode(entity.getPassword()));
+				emailSenderService.sendAsync(to, null, null, "GTG PASSWORD RESET", builder.toString());
+				isSuccess = true;
+			}
+		}
+		log.info("forgotPassword()- end");
+		return isSuccess;
 	}
+
+}
 
 }

@@ -8,6 +8,16 @@ public class GTGMQEvent implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	private String asyncCallType;
+
+	public String getAsyncCallType() {
+		return asyncCallType;
+	}
+
+	public void setAsyncCallType(String asyncCallType) {
+		this.asyncCallType = asyncCallType;
+	}
+
 	private UserDTO userDTO;
 
 	public UserDTO getUserDTO() {
@@ -17,5 +27,5 @@ public class GTGMQEvent implements Serializable {
 	public void setUserDTO(UserDTO userDTO) {
 		this.userDTO = userDTO;
 	}
-	
+
 }

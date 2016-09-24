@@ -48,6 +48,13 @@
 	<artifactId>gtg-core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	</dependency>
+	
+	<dependency>
+	<groupId>com.gtg</groupId>
+	<artifactId>gtg-emailer</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+	
 		 <!-- Add typical dependencies for a web application -->
 		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
 		 <dependency>
