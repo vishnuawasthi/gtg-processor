@@ -28,4 +28,10 @@ public class GTGMQEvent implements Serializable {
 		this.userDTO = userDTO;
 	}
 
+	@Override
+	public String toString() {
+		return "GTGMQEvent [asyncCallType=" + asyncCallType + ", userDTO=" + userDTO + "]";
+	}
+
+	
 }

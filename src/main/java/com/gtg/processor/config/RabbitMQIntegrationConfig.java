@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.gtg.processor.manager.service.LoginService;
 import com.gtg.processor.receiver.GTGEventReceiver;
 
 @Configuration
@@ -64,11 +65,6 @@ public class RabbitMQIntegrationConfig {
 		rabbitMQDataReceiver.setMessageConverter(jsonMessageConverter);
 		return container;
 
-	}
-
-	@Bean
-	public GTGEventReceiver gtgEventReceiver() {
-		return new GTGEventReceiver();
 	}
 
 	@Bean

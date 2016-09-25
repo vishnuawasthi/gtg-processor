@@ -27,7 +27,8 @@ import com.gtg.processor.manager.service.RedisService;
 		"com.gtg.processor.jobs", 
 		"com.gtg.processor.manager.service",
 		"com.gtg.processor.marketplace.service", 
-		"com.gtg.processor.receiver" })
+		"com.gtg.processor.receiver",
+		"com.gtg.email.service"})
 public class Application implements CommandLineRunner {
 
 	@Autowired
