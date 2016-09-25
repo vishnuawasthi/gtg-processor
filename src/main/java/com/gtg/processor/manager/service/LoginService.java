@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.gtg.core.entity.User;
-import com.gtg.core.entity.UserRoles;
+import com.gtg.core.entity.UserRules;
 import com.gtg.core.repository.UserRepository;
-import com.gtg.core.repository.UserRolesRepository;
+import com.gtg.core.repository.UserRulesRepository;
 import com.gtg.core.utils.CommonUtility;
 import com.gtg.email.service.EmailSenderService;
 import com.gtg.processor.constants.Constants;
@@ -64,7 +64,7 @@ public interface LoginService {
 		private UserRepository userRepository;
 
 		@Autowired
-		private UserRolesRepository userRolesRepository;
+		private UserRulesRepository userRulesRepository;
 
 		@Autowired
 		private EmailSenderService emailSenderService;
@@ -168,8 +168,8 @@ public interface LoginService {
 
 			User entity = dtoToEntity(userDTO);
 
-			UserRoles userRoles = userRolesRepository.findOne(userDTO.getRoleId());
-			entity.setUserRoles(userRoles);
+			UserRules userRules = userRulesRepository.findOne(userDTO.getRoleId());
+			entity.setUserRules(userRules);
 			User user = userRepository.save(entity);
 
 			if (user != null) {
@@ -193,8 +193,8 @@ public interface LoginService {
 				dto.setFirstName(entity.getFirstName());
 				dto.setLastName(entity.getLastName());
 				dto.setEmail(entity.getEmail());
-				dto.setRoleId(StringUtils.isEmpty(entity.getUserRoles()) ? null : entity.getUserRoles().getId());
-				dto.setRoleName(StringUtils.isEmpty(entity.getUserRoles()) ? "" : entity.getUserRoles().getRoleName());
+				dto.setRoleId(StringUtils.isEmpty(entity.getUserRules()) ? null : entity.getUserRules().getId());
+				dto.setRoleName(StringUtils.isEmpty(entity.getUserRules()) ? "" : entity.getUserRules().getRuleName());
 				dto.setUpdated(entity.getUpdated());
 				dto.setCreated(entity.getCreated());
 				dto.setUpdatedBy(entity.getUpdatedBy());
