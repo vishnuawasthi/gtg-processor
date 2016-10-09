@@ -1,4 +1,4 @@
-package com.gtg.processor.config;
+package com.gtg.services.config;
 
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;

@@ -1,4 +1,4 @@
-package com.gtg.processor.exception;
+package com.gtg.services.exception;
 
 public class InvalidUserException extends Exception {
 

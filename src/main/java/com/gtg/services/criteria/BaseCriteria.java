@@ -1,4 +1,4 @@
-package com.gtg.processor.criteria;
+package com.gtg.services.criteria;
 
 public abstract class BaseCriteria {
 

@@ -1,4 +1,4 @@
-package com.gtg.processor.utils;
+package com.gtg.services.utils;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;

@@ -1,4 +1,4 @@
-package com.gtg.processor.config;
+package com.gtg.services.config;
 
 import javax.annotation.PostConstruct;
 
@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.gtg.processor.manager.service.LoginService;
-import com.gtg.processor.receiver.GTGEventReceiver;
+import com.gtg.services.receiver.GTGEventReceiver;
+import com.gtg.services.service.LoginService;
 
 @Configuration
 public class RabbitMQIntegrationConfig {

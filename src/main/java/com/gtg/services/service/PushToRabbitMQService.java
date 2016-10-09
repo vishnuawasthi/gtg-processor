@@ -1,14 +1,15 @@
-package com.gtg.processor.manager.service;
+package com.gtg.services.service;
 
-import static com.gtg.processor.constants.RabbitMQConstants.CREATE_GTG_DATA_ROUTING_KEY;
-import static com.gtg.processor.constants.RabbitMQConstants.GTG_EXCHANGE_NAME;
+import static com.gtg.services.constants.RabbitMQConstants.CREATE_GTG_DATA_ROUTING_KEY;
+import static com.gtg.services.constants.RabbitMQConstants.GTG_EXCHANGE_NAME;
 
 import org.apache.log4j.Logger;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.gtg.processor.events.GTGMQEvent;
+import com.gtg.lib.events.GTGMQEvent;
+
 
 public interface PushToRabbitMQService {
 

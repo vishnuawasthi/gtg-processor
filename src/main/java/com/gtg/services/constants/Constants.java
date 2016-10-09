@@ -1,4 +1,4 @@
-package com.gtg.processor.constants;
+package com.gtg.services.constants;
 
 public class Constants {
 	

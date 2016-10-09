@@ -1,13 +1,13 @@
-package com.gtg.processor.receiver;
+package com.gtg.services.receiver;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.gtg.core.constants.GTGAsyncCallsType;
-import com.gtg.processor.events.GTGMQEvent;
-import com.gtg.processor.exception.InvalidUserException;
-import com.gtg.processor.manager.service.LoginService;
+import com.gtg.lib.events.GTGMQEvent;
+import com.gtg.services.exception.InvalidUserException;
+import com.gtg.services.service.LoginService;
 
 @Component
 public class GTGEventReceiver {

@@ -1,4 +1,4 @@
-package com.gtg.processor.jobs;
+package com.gtg.services.jobs;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
